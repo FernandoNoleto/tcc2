@@ -5,14 +5,19 @@ import numpy as np
 
 import cv2
 
-queimada = (168, 28, 13, 255) #vermelho
+queimada = (168, 28, 13) #vermelho
 branco = (255,255,255, 255)
 PONTOS = []
-# LIMITE_INF = dict([('r',  63), ('g',  63), ('b', 40)]) #original
-# LIMITE_SUP = dict([('r', 114), ('g', 117), ('b', 99)]) #original
 
-LIMITE_INF = dict([('r',  60), ('g',  50), ('b', 40)]) 
-LIMITE_SUP = dict([('r', 114), ('g', 117), ('b', 99)]) 
+#limite inferior para a imagem de Palmas
+LIMITE_INF_P = dict([('r',  1), ('g',  0), ('b', 28)]) 
+#limite superior para a imagem de Palmas
+LIMITE_SUP_P = dict([('r', 255), ('g', 112), ('b', 255)]) 
+
+#limite inferior para o resto das imagens
+LIMITE_INF_R = dict([('r',  80), ('g',  35), ('b', 110)]) 
+#limite superior para a imagem de Palmas
+LIMITE_SUP_R = dict([('r', 190), ('g', 132), ('b', 215)]) 
 
 #Abre uma imagem
 def abrir_imagem(nome_img):
@@ -76,16 +81,17 @@ def encontrar_pixels_de_queimadas(img, segmentacao):
     #Segmentacao de Palmas
     if segmentacao == 1:
         for y, x in product(range(height), range(width)):
-            r,g,b,a = pix[x,y]
-            if(r > LIMITE_INF.get('r') and r < LIMITE_SUP.get('r') and g > LIMITE_INF.get('g') and
-               g < LIMITE_SUP.get('g') and b > LIMITE_INF.get('b') and b < LIMITE_SUP.get('b')):
+            r,g,b = pix[x,y]
+            if(r > LIMITE_INF_P.get('r') and r < LIMITE_SUP_P.get('r') and g > LIMITE_INF_P.get('g') and
+               g < LIMITE_SUP_P.get('g') and b > LIMITE_INF_P.get('b') and b < LIMITE_SUP_P.get('b')):
                PONTOS.append((x,y))
     
     #Segmentacao do resto
     if segmentacao == 2:
         for y, x in product(range(height), range(width)):
-            r,g,b,a = pix[x,y]
-            if(r > 80 and r < 190 and g > 35 and g < 132 and b > 110 and b < 215):
+            r,g,b = pix[x,y]
+            if(r > LIMITE_INF_R.get('r') and r < LIMITE_SUP_R.get('r') and g > LIMITE_INF_R.get('g') and
+            g < LIMITE_SUP_R.get('g') and b > LIMITE_INF_R.get('b') and b < LIMITE_SUP_R.get('b')):
                 PONTOS.append((x,y))
     
 
@@ -138,163 +144,489 @@ def crescimento_de_regiao(img):
     width, height = img.size
     pix = img.load()  
 
-    for x,y in PONTOS:
-        if(x > 0 and x < width-1 and y > 0 and y < height-1):
-            r,g,b,a = pix[x+1,y]
-            if(distancia(r, LIMITE_INF.get('r'))<= 5):
-                print("entrou no if r inferior")
-                limite_r = dict([('r', LIMITE_INF.get('r')-5)])
-                LIMITE_INF.update(limite_r)
-                PONTOS.append((x+1,y))
-                pixels_acrescentados+=1
-            
-            # aumentando limite superior para r
-            if(distancia(r, LIMITE_SUP.get('r'))<= 5):
-                print("entrou no if r superior")
-                limite_r = dict([('r', LIMITE_SUP.get('r')+5)])
-                LIMITE_SUP.update(limite_r)
-                PONTOS.append((x+1,y))
-                pixels_acrescentados+=1
-            
-            # reduzindo limite inferior para g
-            if(distancia(g, LIMITE_INF.get('g'))<= 5):
-                print("entrou no if g inferior")
-                limite_g = dict([('g', LIMITE_INF.get('g')-5)])
-                LIMITE_INF.update(limite_g)
-                PONTOS.append((x+1,y))
-                pixels_acrescentados+=1
-            
-            # aumentando limite superior para g
-            if(distancia(g, LIMITE_SUP.get('g'))<= 5):
-                print("entrou no if g superior")
-                limite_g = dict([('g', LIMITE_SUP.get('g')+5)])
-                LIMITE_SUP.update(limite_g)
-                PONTOS.append((x+1,y))
-                pixels_acrescentados+=1
-            
-            # reduzindo limite inferior para b
-            if(distancia(b, LIMITE_INF.get('b'))<= 5):
-                print("entrou no if b inferior")
-                limite_b = dict([('b', LIMITE_INF.get('b')-5)])
-                LIMITE_INF.update(limite_b)
-                PONTOS.append((x+1,y))
-                pixels_acrescentados+=1
-            
-            # aumentando limite superior para b
-            if(distancia(b, LIMITE_SUP.get('b'))<= 5):
-                print("entrou no if b superior")
-                limite_b = dict([('b', LIMITE_SUP.get('b')+5)])
-                LIMITE_SUP.update(limite_b)
-                PONTOS.append((x+1,y))
-                pixels_acrescentados+=1
-            
-    #-----------------------------------------------------------------------#
+    flag = 0
+    #primeiro
+    while 1:
+        print("Limite superior: {}".format(LIMITE_SUP_P))
+        print("Limite inferior: {}".format(LIMITE_INF_P))
+        flag = 0
+        for x,y in PONTOS:
+            if(x > 0 and x < width-1 and y > 0 and y < height-1):
+                r,g,b,a = pix[x+1,y]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x+1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                    print("Limite superior: {}".format(LIMITE_SUP_P))
+                    print("Limite inferior: {}".format(LIMITE_INF_P))
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x+1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                    print("Limite superior: {}".format(LIMITE_SUP_P))
+                    print("Limite inferior: {}".format(LIMITE_INF_P))
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x+1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                    print("Limite superior: {}".format(LIMITE_SUP_P))
+                    print("Limite inferior: {}".format(LIMITE_INF_P))
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x+1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                    print("Limite superior: {}".format(LIMITE_SUP_P))
+                    print("Limite inferior: {}".format(LIMITE_INF_P))
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x+1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                    print("Limite superior: {}".format(LIMITE_SUP_P))
+                    print("Limite inferior: {}".format(LIMITE_INF_P))
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x+1,y))
+                    pixels_acrescentados+=1
+                    print("Limite superior: {}".format(LIMITE_SUP_P))
+                    print("Limite inferior: {}".format(LIMITE_INF_P))
+                
         
-    for x,y in PONTOS:
-        if(x > 0 and x < width-1 and y > 0 and y < height-1):
-            r,g,b,a = pix[x,y+1]
-            if(distancia(r, LIMITE_INF.get('r'))<= 5):
-                print("entrou no if r inferior")
-                limite_r = dict([('r', LIMITE_INF.get('r')-5)])
-                LIMITE_INF.update(limite_r)
-                PONTOS.append((x,y+1))
-                pixels_acrescentados+=1
-            
-            # aumentando limite superior para r
-            if(distancia(r, LIMITE_SUP.get('r'))<= 5):
-                print("entrou no if r superior")
-                limite_r = dict([('r', LIMITE_SUP.get('r')+5)])
-                LIMITE_SUP.update(limite_r)
-                PONTOS.append((x,y+1))
-                pixels_acrescentados+=1
-            
-            # reduzindo limite inferior para g
-            if(distancia(g, LIMITE_INF.get('g'))<= 5):
-                print("entrou no if g inferior")
-                limite_g = dict([('g', LIMITE_INF.get('g')-5)])
-                LIMITE_INF.update(limite_g)
-                PONTOS.append((x,y+1))
-                pixels_acrescentados+=1
-            
-            # aumentando limite superior para g
-            if(distancia(g, LIMITE_SUP.get('g'))<= 5):
-                print("entrou no if g superior")
-                limite_g = dict([('g', LIMITE_SUP.get('g')+5)])
-                LIMITE_SUP.update(limite_g)
-                PONTOS.append((x,y+1))
-                pixels_acrescentados+=1
-            
-            # reduzindo limite inferior para b
-            if(distancia(b, LIMITE_INF.get('b'))<= 5):
-                print("entrou no if b inferior")
-                limite_b = dict([('b', LIMITE_INF.get('b')-5)])
-                LIMITE_INF.update(limite_b)
-                PONTOS.append((x,y+1))
-                pixels_acrescentados+=1
-            
-            # aumentando limite superior para b
-            if(distancia(b, LIMITE_SUP.get('b'))<= 5):
-                print("entrou no if b superior")
-                limite_b = dict([('b', LIMITE_SUP.get('b')+5)])
-                LIMITE_SUP.update(limite_b)
-                PONTOS.append((x,y+1))
-                pixels_acrescentados+=1
-            
 
-        #-----------------------------------------------------------------------#
+            
+                r,g,b,a = pix[x,y+1]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
 
-            # if(distancia(pix[x-1,y], LIMITE_INF.get('r'))<= 5):
-            #     limite_r = dict([('r', LIMITE_INF.get('r')-5)])
-            #     LIMITE_INF.update(limite_r)
-            #     PONTOS.append(x-1,y)
+        
             
-            # # aumentando limite superior para r
-            # if(distancia(pix[x-1,y], LIMITE_SUP.get('r'))<= 5):
-            #     limite_r = dict([('r', LIMITE_SUP.get('r')-5)])
-            #     LIMITE_SUP.update(limite_r)
-            #     PONTOS.append(x-1,y)
+                r,g,b,a = pix[x-1,y]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x-1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x-1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x-1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x-1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x-1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x-1,y))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
             
-            # # reduzindo limite inferior para g
-            # if(distancia(pix[x-1,y], LIMITE_INF.get('g'))<= 5):
-            #     limite_g = dict([('g', LIMITE_INF.get('g')-5)])
-            #     LIMITE_INF.update(limite_g)
-            #     PONTOS.append(x-1,y)
+        
+                
+                r,g,b,a = pix[x,y-1]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+        
+        
+        
             
-            # # aumentando limite superior para g
-            # if(distancia(pix[x-1,y], LIMITE_SUP.get('g'))<= 5):
-            #     limite_g = dict([('g', LIMITE_SUP.get('g')-5)])
-            #     LIMITE_SUP.update(limite_g)
-            #     PONTOS.append(x-1,y)
+                r,g,b,a = pix[x+1,y+1]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x+1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x+1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x+1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x+1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x+1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x+1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+
+                    
+
             
-            # # reduzindo limite inferior para b
-            # if(distancia(pix[x-1,y], LIMITE_INF.get('b'))<= 5):
-            #     limite_b = dict([('b', LIMITE_INF.get('b')-5)])
-            #     LIMITE_INF.update(limite_b)
-            #     PONTOS.append(x-1,y)
+                r,g,b,a = pix[x+1,y-1]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x+1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x+1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x+1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x+1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x+1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x+1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+
+        
+        
             
-            # # aumentando limite superior para b
-            # if(distancia(pix[x-1,y], LIMITE_SUP.get('b'))<= 5):
-            #     limite_b = dict([('b', LIMITE_SUP.get('b')-5)])
-            #     LIMITE_SUP.update(limite_b)
-            #     PONTOS.append(x-1,y)
+                r,g,b,a = pix[x-1,y+1]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x-1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x-1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x-1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x-1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x-1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x-1,y+1))
+                    pixels_acrescentados+=1
+                    flag = 1
+
+
+
             
-           
-            # if(pix[x,y-1]):
-            #     pass
-            # if(pix[x,y-1]):
-            #     pass
-            # if(pix[x+1,y+1]):
-            #     pass
-            # if(pix[x+1,y-1]):
-            #     pass
-            # if(pix[x-1,y-1]):
-            #     pass
+                r,g,b,a = pix[x-1,y-1]
+                if(distancia(r, LIMITE_INF_P.get('r'))<= 5):
+                    print("entrou no if r inferior")
+                    limite_r = dict([('r', LIMITE_INF_P.get('r')-5)])
+                    LIMITE_INF_P.update(limite_r)
+                    PONTOS.append((x-1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para r
+                if(distancia(r, LIMITE_SUP_P.get('r'))<= 5):
+                    print("entrou no if r superior")
+                    limite_r = dict([('r', LIMITE_SUP_P.get('r')+5)])
+                    LIMITE_SUP_P.update(limite_r)
+                    PONTOS.append((x-1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para g
+                if(distancia(g, LIMITE_INF_P.get('g'))<= 5):
+                    print("entrou no if g inferior")
+                    limite_g = dict([('g', LIMITE_INF_P.get('g')-5)])
+                    LIMITE_INF_P.update(limite_g)
+                    PONTOS.append((x-1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para g
+                if(distancia(g, LIMITE_SUP_P.get('g'))<= 5):
+                    print("entrou no if g superior")
+                    limite_g = dict([('g', LIMITE_SUP_P.get('g')+5)])
+                    LIMITE_SUP_P.update(limite_g)
+                    PONTOS.append((x-1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # reduzindo limite inferior para b
+                if(distancia(b, LIMITE_INF_P.get('b'))<= 5):
+                    print("entrou no if b inferior")
+                    limite_b = dict([('b', LIMITE_INF_P.get('b')-5)])
+                    LIMITE_INF_P.update(limite_b)
+                    PONTOS.append((x-1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+                
+                # aumentando limite superior para b
+                if(distancia(b, LIMITE_SUP_P.get('b'))<= 5):
+                    print("entrou no if b superior")
+                    limite_b = dict([('b', LIMITE_SUP_P.get('b')+5)])
+                    LIMITE_SUP_P.update(limite_b)
+                    PONTOS.append((x-1,y-1))
+                    pixels_acrescentados+=1
+                    flag = 1
+        
+        
+        print("pixels acrescentados: {}".format(pixels_acrescentados))
+        print("flag = {}".format(flag))
+        if flag == 0:
+            break
         
     for p in PONTOS:
         x,y = p
         pix[x,y] = queimada
     
-    print(pixels_acrescentados)
+    # print("pixels acrescentados: {}".format(pixels_acrescentados))
         
     
     return img
@@ -304,41 +636,50 @@ def crescimento_de_regiao(img):
 
 
 def main():
+    
+    #para escolher o nome de imagem mude a string abaixo:
+    nome="palmas2009.png"
+
     abertura = int(input("Digite a abertura: 1-5. Padrão: \'3\'"))
     segmentacao = int(input("Digite a segmentacao: 1-2. Padrão: \'1\'"))
-    nome_imagem = "area-queimada.png"
+    nome_imagem = "imagens-satelite/"+nome
     
     print("Nome image: {}".format(nome_imagem))
     print("Open par: {}".format(abertura))
     print("Segm par: {}".format(segmentacao))
     
     img = abrir_imagem(nome_imagem)
+    img.save(nome)
     
 
     #pontos vermelhos
-    img2 = encontrar_pixels_de_queimadas(img, segmentacao)
-    img2.save("segmentada-cores.png")
+    img = encontrar_pixels_de_queimadas(img, segmentacao)
+    img.save("segmentada-cores.png")
 
 
     #crescimento de regiao
-    img3 = crescimento_de_regiao(img)
-    img3.save('crescimento.png')
+    # img = crescimento_de_regiao(img)
+    # img.save('crescimento.png')
     # img3.show()
 
-    # #pontos brancos
-    # img4 = diferenca(img3)
-    # img4.save('diferenca.png')
+    #pontos brancos
+    img = diferenca(img) #pegando img3
+    img.save('diferenca.png')
     
-    # #abertura
-    # img5 = cv2.imread('diferenca.png',0)
-    # kernel = np.ones((abertura,abertura),np.uint8)
-    # opening = cv2.morphologyEx(img4, cv2.MORPH_OPEN, kernel)
+    #abertura
+    img = cv2.imread('diferenca.png',0) #pegando img4
+    kernel = np.ones((abertura,abertura),np.uint8)
+    opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
     
-    # #salvando imagem final
-    # nome = str(abertura)+str(segmentacao)+nome_imagem
-    # print("Nome local salvar: {}".format(nome))
-    # cv2.imwrite(nome, opening)
+    #salvando imagem final
+    nome = str(abertura)+str(segmentacao)+nome
+    print("Nome local salvar: {}".format(nome))
+    cv2.imwrite(nome, opening)
     
+
+
+    ## -------------------------------- parte que usa flask ----------------------------------##
+
     # img5 = abrir_imagem(nome)
     # area = area_de_queimada(abrir_imagem(nome))
     # print("Area de queimada: {}m²".format(area))
@@ -355,5 +696,5 @@ def main():
     # mostrar_imagem(nome_imagem+"-segmentada"+".png")
 
 if __name__ == '__main__':
-    # print(LIMITE_SUP.get('b'))
+    # print(LIMITE_SUP_P.get('b'))
     main()
