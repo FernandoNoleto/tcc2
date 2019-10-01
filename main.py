@@ -1,8 +1,6 @@
 from PIL import Image, ImageFilter, ImageEnhance
 from itertools import product
 import numpy as np
-
-
 import cv2
 
 queimada = (168, 28, 13) #vermelho
@@ -10,9 +8,11 @@ branco = (255,255,255, 255)
 PONTOS = []
 
 #limite inferior para a imagem de Palmas
-LIMITE_INF_P = dict([('r',  1), ('g',  0), ('b', 28)]) 
+# LIMITE_INF_P = dict([('r',  1), ('g',  0), ('b', 28)]) 
+LIMITE_INF_P = dict([('r',  3), ('g',  30), ('b', 60)]) 
 #limite superior para a imagem de Palmas
-LIMITE_SUP_P = dict([('r', 255), ('g', 112), ('b', 255)]) 
+# LIMITE_SUP_P = dict([('r', 255), ('g', 112), ('b', 255)]) 
+LIMITE_SUP_P = dict([('r', 191), ('g', 85), ('b', 160)]) 
 
 #limite inferior para o resto das imagens
 LIMITE_INF_R = dict([('r',  80), ('g',  35), ('b', 110)]) 
@@ -51,8 +51,8 @@ def imprimir_valores(img):
             time.sleep(0.1)
         print("x: {}| y: {} = {}".format(x, y, pix[x,y]))
 
-def mostrar_imagem(nome_img):
-    call(["ristretto", nome_img])
+# def mostrar_imagem(nome_img):
+#     call(["ristretto", nome_img])
 
 #função auxiliar de modulo para calcular distancia
 def distancia(valor1, valor2):
@@ -84,7 +84,9 @@ def encontrar_pixels_de_queimadas(img, segmentacao):
             r,g,b = pix[x,y]
             if(r > LIMITE_INF_P.get('r') and r < LIMITE_SUP_P.get('r') and g > LIMITE_INF_P.get('g') and
                g < LIMITE_SUP_P.get('g') and b > LIMITE_INF_P.get('b') and b < LIMITE_SUP_P.get('b')):
-               PONTOS.append((x,y))
+                PONTOS.append((x,y))
+                # if(g < r and g < b):
+                    # PONTOS.append((x,y))
     
     #Segmentacao do resto
     if segmentacao == 2:
@@ -92,7 +94,8 @@ def encontrar_pixels_de_queimadas(img, segmentacao):
             r,g,b = pix[x,y]
             if(r > LIMITE_INF_R.get('r') and r < LIMITE_SUP_R.get('r') and g > LIMITE_INF_R.get('g') and
             g < LIMITE_SUP_R.get('g') and b > LIMITE_INF_R.get('b') and b < LIMITE_SUP_R.get('b')):
-                PONTOS.append((x,y))
+                if(g < r and g < b):
+                    PONTOS.append((x,y))
     
 
     # crescimento_de_regiao(img)
@@ -638,7 +641,7 @@ def crescimento_de_regiao(img):
 def main():
     
     #para escolher o nome de imagem mude a string abaixo:
-    nome="palmas2009.png"
+    nome="palmas2017.png"
 
     abertura = int(input("Digite a abertura: 1-5. Padrão: \'3\'"))
     segmentacao = int(input("Digite a segmentacao: 1-2. Padrão: \'1\'"))
