@@ -2,9 +2,8 @@ from PIL import Image, ImageFilter, ImageEnhance
 from itertools import product
 import numpy as np
 import cv2
-import functions
 
-queimada = (168, 28, 13) #vermelho
+queimada = (168, 28, 13, 255) #vermelho
 branco = (255,255,255, 255)
 PONTOS = []
 
@@ -15,10 +14,10 @@ LIMITE_INF_P = dict([('r',  3), ('g',  30), ('b', 60)])
 # LIMITE_SUP_P = dict([('r', 255), ('g', 112), ('b', 255)]) 
 LIMITE_SUP_P = dict([('r', 191), ('g', 85), ('b', 160)]) 
 
-#limite inferior para o resto das imagens
-LIMITE_INF_R = dict([('r',  80), ('g',  35), ('b', 110)]) 
+#limite inferior para o bico do papagaio
+LIMITE_INF_B = dict([('r',  6), ('g',  0), ('b', 2)]) 
 #limite superior para a imagem de Palmas
-LIMITE_SUP_R = dict([('r', 190), ('g', 132), ('b', 215)]) 
+LIMITE_SUP_B = dict([('r', 186), ('g', 93), ('b', 233)]) 
 
 #Abre uma imagem
 def abrir_imagem(nome_img):
@@ -89,12 +88,12 @@ def encontrar_pixels_de_queimadas(img, segmentacao):
                 # if(g < r and g < b):
                     # PONTOS.append((x,y))
     
-    #Segmentacao do resto
+    #Segmentacao do bico
     if segmentacao == 2:
         for y, x in product(range(height), range(width)):
-            r,g,b = pix[x,y]
-            if(r > LIMITE_INF_R.get('r') and r < LIMITE_SUP_R.get('r') and g > LIMITE_INF_R.get('g') and
-            g < LIMITE_SUP_R.get('g') and b > LIMITE_INF_R.get('b') and b < LIMITE_SUP_R.get('b')):
+            r,g,b,a = pix[x,y]
+            if(r > LIMITE_INF_B.get('r') and r < LIMITE_SUP_B.get('r') and g > LIMITE_INF_B.get('g') and
+            g < LIMITE_SUP_B.get('g') and b > LIMITE_INF_B.get('b') and b < LIMITE_SUP_B.get('b')):
                 if(g < r and g < b):
                     PONTOS.append((x,y))
     
@@ -104,6 +103,8 @@ def encontrar_pixels_de_queimadas(img, segmentacao):
     for pixel in PONTOS:
         x,y = pixel
         pix[x,y] = queimada
+    
+    PONTOS.clear()
     
 
     return img
@@ -635,74 +636,64 @@ def crescimento_de_regiao(img):
     
     return img
     
-def limiarizar_por_escala_de_cinza(img, regiao):
-    pix = img.load()
-    width, height = img.size
-    
-    
-    for y, x in product(range(height), range(width)):
-        if regiao == "P" or regiao == "p":
-            if(pix[x,y] >= 16 and pix[x,y] <= 100):
-                PONTOS.append((x,y))
-        if regiao == "B" or regiao == "b":
-            if(pix[x,y] >= 12 and pix[x,y] <= 85):
-                PONTOS.append((x,y))
 
-    for pixel in PONTOS:
-        x,y = pixel
-        pix[x,y] = 255
-    
-    PONTOS.clear()
-    return img
 
-def abertura(nome_img, tamanho):
-    img = cv2.imread(nome_img, 0) #pegando img4
-    # kernel = np.ones((tamanho, tamanho),np.uint8)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(tamanho,tamanho))    
-    img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
 
-    return img
 
 def main():
-    
-    #para escolher o nome de imagem mude a string abaixo:
-    nome="palmas2009.png"
 
-    abertura = int(input("Digite a abertura: 1-5. Padrão: \'3\'"))
-    segmentacao = int(input("Digite a segmentacao: 1-2. Padrão: \'1\'"))
-    nome_imagem = "imagens-satelite/"+nome
+    nome_imgs = ["bico2008.png",
+    "bico2009.png",
+    "bico2013.png",
+    "bico2014.png",
+    "bico2015.png",
+    "bico2016.png",
+    "bico2017.png"]
     
-    print("Nome image: {}".format(nome_imagem))
-    print("Open par: {}".format(abertura))
-    print("Segm par: {}".format(segmentacao))
-    
-    img = abrir_imagem(nome_imagem)
-    img.save(nome)
-    
+    for nome in nome_imgs:
+        #para escolher o nome de imagem mude a string abaixo:
+        # nome="palmas2017.png"
 
-    #pontos vermelhos
-    img = encontrar_pixels_de_queimadas(img, segmentacao)
-    img.save("segmentada-cores.png")
+        abertura = int(input("Digite a abertura: 1-5. Padrão: \'3\'"))
+        segmentacao = 2
+        # segmentacao = int(input("Digite a segmentacao: 1-2. Palmas: 1. Bico: 2"))
+        
+
+        nome_imagem = "imagens-satelite/"+nome
+        
+        print("Nome image: {}".format(nome_imagem))
+        print("Open par: {}".format(abertura))
+        print("Segm par: {}".format(segmentacao))
+        
+        img = abrir_imagem(nome_imagem)
+        img.save(nome)
+        
+
+        #pontos vermelhos
+        img = encontrar_pixels_de_queimadas(img, segmentacao)
+        img.save("segmentada-cores.png")
 
 
-    #crescimento de regiao
-    # img = crescimento_de_regiao(img)
-    # img.save('crescimento.png')
-    # img3.show()
+        #crescimento de regiao
+        # img = crescimento_de_regiao(img)
+        # img.save('crescimento.png')
+        # img3.show()
 
-    #pontos brancos
-    img = diferenca(img) #pegando img3
-    img.save('diferenca.png')
-    
-    #abertura
-    img = cv2.imread('diferenca.png',0) #pegando img4
-    kernel = np.ones((abertura,abertura),np.uint8)
-    opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
-    
-    #salvando imagem final
-    nome = str(abertura)+str(segmentacao)+nome
-    print("Nome local salvar: {}".format(nome))
-    cv2.imwrite(nome, opening)
+        #pontos brancos
+        img = diferenca(img) #pegando img3
+        img.save('diferenca.png')
+        
+        #abertura
+        img = cv2.imread('diferenca.png',0) #pegando img4
+        kernel = np.ones((abertura,abertura),np.uint8)
+        opening = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+        
+        #salvando imagem final
+        nome = str(abertura)+str(segmentacao)+nome
+        print("Nome local salvar: {}".format(nome))
+        cv2.imwrite(nome, opening)
+
+        nome_imagem = ""
     
 
 
@@ -724,42 +715,5 @@ def main():
     # mostrar_imagem(nome_imagem+"-segmentada"+".png")
 
 if __name__ == '__main__':
-    # main()
-    
-    # ---------------------SEGMENTANDO POR ESCALA DE CINZA------------------------ #
-    regiao = str(input("Digite a região que você deseja segmentar: \"P = Palmas || B = Bico\""))
-    tamanho_abertura = int(input("Digite a abertura: 1-5. Padrão: \'3\'"))
-
-    if regiao == "P" or regiao == "p":
-        nomes = ["palmas2008","palmas2009","palmas2010","palmas2011","palmas2013","palmas2014", "palmas2015","palmas2016","palmas2017"]
-    if regiao == "B" or regiao == "b":
-        nomes = ["bico2008","bico2009","bico2013","bico2014", "bico2015","bico2016","bico2017"]
-
-    diretorio = "resultados/"
-
-    for nome in nomes:
-
-        nome_imagem = "imagens-satelite/"+nome+".png"
-
-
-        img = abrir_imagem(nome_imagem)
-        img.save(diretorio+nome+".png")
-
-        img = escala_de_cinza(img)  
-        img.save(diretorio+nome+"escala_de_cinza.png")
-
-        img = limiarizar_por_escala_de_cinza(img, regiao)
-        img.save(diretorio+nome+"segmentada.png")
-
-        #salvando imagem final
-        
-        # opening = functions.abertura(img)
-        # img.save("final.png")
-
-        
-        opening = abertura(diretorio+nome+"segmentada.png", tamanho_abertura)
-        print("Nome local salvar: {}"
-        .format(diretorio+nome+"_"+str(tamanho_abertura)+"_final.png"))
-        cv2.imwrite(diretorio+nome+"_"+str(tamanho_abertura)+"_final.png", opening)
-
-        print("{}: OK".format(nome_imagem))
+    # print(LIMITE_SUP_P.get('b'))
+    main()
