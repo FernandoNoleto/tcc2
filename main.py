@@ -647,6 +647,9 @@ def limiarizar_por_escala_de_cinza(img, regiao):
         if regiao == "B" or regiao == "b":
             if(pix[x,y] >= 12 and pix[x,y] <= 85):
                 PONTOS.append((x,y))
+        if regiao == "I" or regiao == "i":
+            if(pix[x,y] >= 22 and pix[x,y] <= 90):
+                PONTOS.append((x,y))                
 
     for pixel in PONTOS:
         x,y = pixel
@@ -727,13 +730,15 @@ if __name__ == '__main__':
     # main()
     
     # ---------------------SEGMENTANDO POR ESCALA DE CINZA------------------------ #
-    regiao = str(input("Digite a região que você deseja segmentar: \"P = Palmas || B = Bico\""))
-    tamanho_abertura = int(input("Digite a abertura: 1-5. Padrão: \'3\'"))
+    regiao = str(input("Digite a região que você deseja segmentar: \"P = Palmas || B = Bico || I = Ilha do Bananal\" "))
+    tamanho_abertura = int(input("Digite a abertura: 1-5. Padrão: \"3\" "))
 
     if regiao == "P" or regiao == "p":
         nomes = ["palmas2008","palmas2009","palmas2010","palmas2011","palmas2013","palmas2014", "palmas2015","palmas2016","palmas2017"]
-    if regiao == "B" or regiao == "b":
+    elif regiao == "B" or regiao == "b":
         nomes = ["bico2008","bico2009","bico2013","bico2014", "bico2015","bico2016","bico2017"]
+    elif regiao == "I" or regiao == "i":
+        nomes = ["ilha2008","ilha2009","ilha2010","ilha2011","ilha2012","ilha2013","ilha2014", "ilha2015","ilha2016","ilha2017"]
 
     diretorio = "resultados/"
 
